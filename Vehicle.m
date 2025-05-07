@@ -37,6 +37,9 @@ classdef Vehicle < handle
         controlInput
         errors
         outputs
+        
+        % Leader's state estimates
+        statesLeader        % \hat{x}_ik
 
         % state history
         stateHistory = []
@@ -56,6 +59,7 @@ classdef Vehicle < handle
         
         % collection of R_i matrix for DSS condition verification
         R_i
+
     end
     
     methods
@@ -321,7 +325,35 @@ classdef Vehicle < handle
             updateValue = A*obj.states + B*obj.controlInput + obj.noise;
             
             newStates = obj.states + dt*(updateValue);
-            obj.states = newStates;                     
+            obj.states = newStates;
+
+            % Collect all the state points at each step
+            obj.stateHistory = [obj.stateHistory, newStates];
+
+        end
+
+
+        %% Chenges here for observer: 
+        % Update the state values of the system dynamics
+        function vehicleError = updateFull(obj,t,dt)
+            
+            vehicleError = obj.errors;
+
+            A = [0 1 0; 0 0 1; 0 0 0];
+            B = [0 0 1]';
+
+            updateValue = A*obj.states + B*obj.controlInput + obj.noise;
+            
+            newStates = obj.states + dt*(updateValue);
+            obj.states = newStates;
+            
+            A = [0, 1; 0, 0];
+            B = [0; 1];
+            observerUpdateValue = A*obj.statesLeader + B*obj.observerInput + obj.observerNoise;
+            newStatesLeader = obj.statesLeader + dt*(observerUpdateValue);
+            obj.statesLeader = newStatesLeader;
+            % obj.observerInput is the \hat{u}_i in the paper (lower half of \tilde{u}_i)
+            % obj.observerNoise is the lower half of the noise w_i
             
             % Collect all the state points at each step
             obj.stateHistory = [obj.stateHistory, newStates];
@@ -329,10 +361,13 @@ classdef Vehicle < handle
         end
 
 
+        
         function outputArg = loadPassivityIndices(obj,nu,rho)
             obj.nu = nu;
             obj.rho = rho;
         end
+
+
 
         function status = synthesizeLocalControllers(obj,errorDynamicsType,nuBar,rhoBar)
             % Here we will synthesize the local controllers for local error

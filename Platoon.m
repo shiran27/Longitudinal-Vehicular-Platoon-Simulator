@@ -11,6 +11,9 @@ classdef Platoon < handle
         
         vehicles = []           % this array holds all the vehicle class objects created. 
         topology
+
+        topologyLeader 
+                 % Vehicles connected to the leader
        
         graphics1 = []
         graphics2 = []
@@ -39,6 +42,7 @@ classdef Platoon < handle
             obj.vehicles = vehicles;
 
             obj.topology = Topology(n_k); % Generate a topology
+            obj.topologyLeader = obj.topology.getTopologyLeader();
             obj.updateNeighbors();   % update the neighbor information of each vehicle object inside obj.vehicles based on obj.topology
             obj.loadDefaultControllerGains(); % based on the neighbor connections, load some controller gains
 
@@ -320,6 +324,11 @@ classdef Platoon < handle
                 if ~isempty(obj.graphics1(i))
                     delete(obj.graphics1(i));
                     delete(obj.graphics2(i));
+                    
+                    % Zihao's suggestion
+                    obj.graphics1(i) = [];
+                    obj.graphics2(i) = [];
+
 
                     % Redraw a link
                     startVehicleIndex = obj.topology.startNodes(i);

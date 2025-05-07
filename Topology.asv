@@ -215,12 +215,15 @@ classdef Topology < handle
         function connectedToNeighbor = getTopologyLeader(obj)
             connectedToNeighbor = zeros(obj.numOfNodes,1);
             for i = 1:1:obj.numOfNodes
-                if any(obj.inNeighbors{i}==1)
-                    connectedToNeighbor(i) = 1;
+                if obj.inNeighbors{i}==1
+                    any(connectedToNeighbor{i} == 1);
                 end
             end
+
         end
 
+        
+       
     end
 end
 
